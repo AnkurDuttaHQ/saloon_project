@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import emailjs from "@emailjs/browser";
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import Breadcrumbs from './Breadcrumbs';
@@ -89,26 +90,25 @@ export default function AppointmentPage() {
     // 1. Send API Post request to backend /api/book
     // Fail-soft: if the API behaves with error, we still save locally to guarantee 100% execution!
     try {
-      const response = await fetch('/api/book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name,
-          phone: phone,
-          email: email || 'walkin@wavelength.com',
-          serviceId: 'custom-treatment',
-          serviceName: service,
-          date: date,
-          time: time,
-          message: notes || 'No additional instructions.'
-        })
-      });
-      
-      const result = await response.json();
-      console.log('API Registration logs:', result);
-    } catch (err) {
-      console.warn('API is running offline/container sandbox context - syncing registration offline', err);
-    }
+  await emailjs.send(
+    import.meta.env.VITE_EMAILJS_SERVICE_ID,
+    import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+    {
+      name,
+      phone,
+      email: email || "walkin@wavelength.com",
+      service,
+      date,
+      time,
+      message: notes || "No additional instructions."
+    },
+    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+  );
+
+  console.log("Email sent successfully");
+} catch (err) {
+  console.error("EmailJS Error:", err);
+}
 
     // 2. Local fallback list persistence
     const updated = [newBooking, ...registryList];
